@@ -5,3 +5,4 @@ __pycache__/
 Analyses/
 
 Auxillary/*
+tmp/*
