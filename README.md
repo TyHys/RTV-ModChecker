@@ -21,6 +21,93 @@ The checker downloads mod files, inspects archive contents statically (no execut
   - `Analyses/<mod-folder>/scan-summary.md`
   - `Analyses/Summary.csv`
 
+## Detailed Checks Performed
+
+The scanner runs these checks today:
+
+- **Archive structure and parsing checks**
+  - Detects zip-slip/path traversal archive entries (for example absolute paths or `../`)  
+    - Rule: `ARCHIVE-TRAVERSAL-001` (critical)
+  - Tries to parse:
+    - zip archives
+    - rar archives (if rar tooling is available)
+  - If package format cannot be fully inspected, reports an informational uncertainty finding  
+    - Rule: `ARCHIVE-001` (low)
+
+- **Blocked/risky file extension checks**
+  - Flags native binaries:
+    - `.exe`, `.dll`, `.so`, `.dylib`
+    - Rule: `ARCHIVE-NATIVE-001` (high)
+  - Flags high-risk script/launcher payloads:
+    - `.ps1`, `.psm1`, `.cmd`, `.msi`, `.vbs`, `.jse`, `.wsf`, `.lnk`, `.scr`, `.com`
+    - Rule: `ARCHIVE-EXEC-001` (critical/high)
+  - Flags JavaScript payload files:
+    - `.js`
+    - Rule: `ARCHIVE-EXEC-003` (high)
+  - Special handling for batch files (`.bat`):
+    - obvious command/network indicators -> medium
+    - local helper/empty batch file -> low
+    - Rule: `ARCHIVE-EXEC-002`
+
+- **Content pattern checks inside text/script files**
+  - Process execution APIs  
+    - Rule: `EXEC-001`
+  - `cmd.exe` command invocation patterns  
+    - Rule: `CMD-001`
+  - Network API indicators (`HTTPRequest`, TCP/UDP/websocket classes)  
+    - Rule: `NET-001`
+  - PowerShell execution patterns  
+    - Rule: `PS-001`
+  - Known malicious domain indicator (`roadtovostok.store`)  
+    - Rule: `IOC-001`
+  - Obfuscation-style indicators (`base64`, `_0x...`, `xor`, etc.) with benign-context filtering  
+    - Rule: `OBF-001`
+  - Encoded numeric payload arrays  
+    - Rule: `OBF-002`
+  - Suspicious absolute/system path references (`%APPDATA%`, `%TEMP%`, registry run keys, startup paths, etc.)  
+    - Rule: `PATH-001`
+
+- **Godot/manifest/config specific checks**
+  - `mod.txt` update metadata sanity (`modworkshop=` format)  
+    - Rule: `MANIFEST-URL-001` (low)
+  - `mod.txt` traversal markers (`..`)  
+    - Rule: `MANIFEST-PATH-001` (critical)
+  - `override.cfg` classification:
+    - risky entries -> high
+    - routine local autoload config -> low
+    - Rule: `OVERRIDE-001`
+
+- **Context-aware behavior checks**
+  - `OS.shell_open(...)` is classified by destination type:
+    - known attacker domain -> critical
+    - external unknown URL -> high
+    - local path / trusted modworkshop link -> low
+    - Rule: `EXEC-002`
+  - `load_resource_pack(...)`:
+    - normal runtime pack-loading outside known loader context -> critical
+    - recognized loader/framework context -> low
+    - Rule: `PACK-001`
+
+- **Binary resource extraction checks**
+  - For known binary Godot resource extensions (`.res`, `.scn`, `.ctex`, `.import`, `.mesh`, `.anim`), extracts readable strings and scans them.
+  - Adds an informational marker when this pipeline runs:
+    - Rule: `DESER-001` (low)
+
+- **Executable provenance context checks**
+  - If mod download is native executable-based, scanner tries to find linked GitHub repository on mod page.
+  - If found, scanner downloads repo source archive and scans it as context.
+  - Emits informational provenance/context finding:
+    - Rule: `GITHUB-REPO-001` (low)
+  - This improves context, but does **not** prove binary and source are identical.
+
+- **De-duplication and scoring**
+  - Duplicate findings are collapsed by rule/severity/title/evidence/path.
+  - Status scoring is severity-driven with uncertainty handling:
+    - critical findings -> `malicious`
+    - high/medium findings -> `suspicious`
+    - low-only uncertainty signals (for example unverifiable archive/provenance) -> `uncertain`
+    - otherwise -> `clean`
+
 ## Statuses
 
 - `clean` - no meaningful danger signals found
