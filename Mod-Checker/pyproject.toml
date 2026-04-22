@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rtv-mod-checker"
+version = "0.1.0"
+description = "CLI scanner for Road to Vostok mods"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "rarfile>=4.2",
+  "tqdm>=4.66.0",
+]
+
+[project.scripts]
+mod-checker = "mod_checker.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mod_checker*"]
+

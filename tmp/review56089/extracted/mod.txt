@@ -1,0 +1,11 @@
+[mod]
+name="Cheat Menu"
+id="cheat-menu"
+version="10.6.2"
+description="A dashboard-first cheat menu for Road to Vostok. F5 opens the dashboard (live vitals, weapon info, stockpile counts, nav strip); F6 opens the item spawner (editable quantity up to 999,999). Includes favoritable cheats, full keybind rebinding, Vitals Tuner (per-vital drain/regen multipliers + freezes + condition immunities), Auto-Med (auto-stock bandage/splint/balm/medkit/IFAK on injury), Named Teleport Bookmarks (10 slots with nicknames, persistent), weapon dashboard that auto-follows your drawn weapon, noclip, tunable fly speed, and a full AI-awareness suite — Invisible to AI, AI ESP overlay with Vostok / Thermal / Spectral Chams themes, thermal see-through-walls, and Freeze All AI. New in v10.6: Profiles — three named loadout slots that save every toggle, slider, bookmark, favorite, keybind, and tuner setting; autosaves on change and auto-loads on launch. Switch loadouts with one click. Optional Cash System integration. Full changelog: CHANGELOG_PUBLIC.md."
+
+[autoload]
+CheatMenuMain="res://mods/CheatMenu/Main.gd"
+
+[updates]
+modworkshop=56089

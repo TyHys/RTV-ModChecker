@@ -1,0 +1,99 @@
+Metadata-Version: 2.4
+Name: rtv-mod-checker
+Version: 0.1.0
+Summary: CLI scanner for Road to Vostok mods
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: tqdm>=4.66.0
+
+# RTV Mod Checker
+
+CLI tool to review Road to Vostok mods from newest to oldest and write one analysis folder per mod-version under `Mod-Checker/Analyses`.
+
+## Install
+
+```bash
+cd Mod-Checker
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+## Usage
+
+Run newest-first scans:
+
+```bash
+mod-checker scan --source roadtovostok --limit 50
+```
+
+Useful flags:
+
+- `--batch-size 1`: iterative mode (default), one mod per run
+- `--dry-run`: build queue only
+- `--force`: re-scan already reviewed versions
+- `--only-mod-id <id>`: targeted scan
+- `--since 2026-04-01T00:00:00`: ignore older uploads
+- `--all`: traverse all listing pages (still respects `--batch-size`)
+- `--base-url https://modworkshop.net/g/road-to-vostok`: override source URL
+
+Scan exactly the next unscanned mod-version:
+
+```bash
+mod-checker scannext
+mod-checker scannext --all
+```
+
+Scan all remaining unscanned mods one-by-one with progress bar:
+
+```bash
+mod-checker scannremaining --all
+```
+
+This command writes each analysis result immediately after each mod is scanned, so interruptions do not lose completed work.
+
+List unscanned candidates (no scanning):
+
+```bash
+mod-checker candidates --limit 100 --format text
+mod-checker candidates --all --format csv --output Analyses/reports/next-candidates.csv
+```
+
+## Outputs
+
+Created per mod-version:
+
+- `Mod-Checker/Analyses/<ModID>-<ModName>-<ModVersion>/metadata.json`
+- `Mod-Checker/Analyses/<ModID>-<ModName>-<ModVersion>/scan-results.json`
+- `Mod-Checker/Analyses/<ModID>-<ModName>-<ModVersion>/scan-summary.md`
+- `Mod-Checker/Analyses/<ModID>-<ModName>-<ModVersion>/artifacts/*`
+
+Run-level index:
+
+- `Mod-Checker/Analyses/index.jsonl`
+
+## Rule Coverage
+
+The engine checks for:
+
+- path traversal and symlink-like entries
+- executable/script payloads in archives
+- suspicious extensions and magic-byte mismatches
+- PowerShell and process execution patterns
+- network and obfuscation indicators
+- suspicious update/download endpoints
+
+## Safety Model
+
+- Scanner performs static analysis only.
+- Downloaded archives are never executed.
+- Archive contents are read directly from the zip stream; files are not extracted to executable locations.
+
+## Scheduling
+
+Example cron (every hour):
+
+```cron
+0 * * * * cd /home/tq/CodeProjects/RTV-Mod-Checker/Mod-Checker && /home/tq/CodeProjects/RTV-Mod-Checker/Mod-Checker/.venv/bin/mod-checker scan --source roadtovostok --limit 100 >> /tmp/rtv-mod-checker.log 2>&1
+```
+

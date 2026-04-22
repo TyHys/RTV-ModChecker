@@ -1,0 +1,2 @@
+[console_scripts]
+mod-checker = mod_checker.cli:main
